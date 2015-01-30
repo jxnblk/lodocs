@@ -9,7 +9,7 @@ module.exports = function(content, data, options) {
       template,
       html;
 
-  this.read = function(filename) {
+  function read(filename) {
     if (fs.existsSync(filename)) {
       return fs.readFileSync(filename, 'utf8');
     } else {
@@ -17,7 +17,7 @@ module.exports = function(content, data, options) {
     }
   };
 
-  this.layout = this.read(data.layout) || this.read('./layouts/base.html');
+  this.layout = read(data.layout) || read('./layouts/base.html');
 
   //this.helpers = {};
 
@@ -39,7 +39,7 @@ module.exports = function(content, data, options) {
   data.extend = function(filename) {
     if (fs.existsSync(filename)) {
       console.log('extend layout', filename);
-      self.layout = fs.readFileSync(filename, 'utf8');
+      self.layout = read(filename);
     } else {
       console.error(filename + ' not found');
       return false;

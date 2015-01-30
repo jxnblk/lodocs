@@ -9,6 +9,8 @@
   "author": "Brent Jackson",
   "license": "MIT",
   "dependencies": {
+    "basscss-grid": "0.0.14",
+    "flex-object": "^1.0.4",
     "front-matter": "^0.2.1",
     "gulp": "^3.8.10",
     "gulp-rename": "^1.2.0",

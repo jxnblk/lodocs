@@ -14,6 +14,8 @@ var rename = require('gulp-rename');
 var webserver = require('gulp-webserver');
 
 var data = require('./package.json');
+data.routes = require('./routes.json');
+
 data.stylesheet = 'http://d2v52k3cl9vedd.cloudfront.net/blk/0.0.14/blk.min.css';
 
 // Default layout
@@ -92,6 +94,10 @@ gulp.task('compile', function() {
     .pipe(gulp.dest('./'));
 });
 
+gulp.task('build', function() {
+  var build = require('./build');
+  build(data);
+});
 
 gulp.task('serve', function() {
   gulp.src('./').pipe(webserver({}));
