@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title><%= title %></title>
+  <meta name="author" content="<%= author %>">
+  <meta name="description" content="<%= description %>">
+  <meta name="keywords" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <% if ( typeof(stylesheet) !== 'undefined' ) { %>
+    <link rel="stylesheet" href="<%= stylesheet %>">
+  <% } else { %>
+    <link rel="stylesheet" href="/docs/css/base.min.css">
+  <% } %>
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+</head>
+<body>
+
+  <%= content %>
+
+  <%= include('footer') %>
+
+</body>
+</html>

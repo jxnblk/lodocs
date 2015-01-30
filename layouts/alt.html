@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title><%= title %></title>
+  <meta name="author" content="<%= author %>">
+  <meta name="description" content="<%= description %>">
+  <meta name="keywords" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <% if ( typeof(stylesheet) !== 'undefined' ) { %>
+    <link rel="stylesheet" href="<%= stylesheet %>">
+  <% } else { %>
+    <link rel="stylesheet" href="/docs/css/base.min.css">
+  <% } %>
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+</head>
+<body class="container px2">
+
+  <div class="clearfix mxn2">
+    <div class="sm-col sm-col-8 px2">
+      <h1>Alt layout</h1>
+      <%= content %>
+    </div>
+    <div class="sm-col sm-col-4 px2">
+      <%= include('sidebar') %>
+    </div>
+  </div>
+
+  <%= include('footer') %>
+
+</body>
+</html>
