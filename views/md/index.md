@@ -1,10 +1,6 @@
 ---
-extend: './layouts/alt.html'
+extend: './layouts/sidebar.html'
 ---
-
-<!--
-<% extend('./layouts/alt.html') %>
--->
 
 # Markdown
 

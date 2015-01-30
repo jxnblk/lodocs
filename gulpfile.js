@@ -7,7 +7,7 @@ var through = require('through2');
 var marked = require('marked');
 var markedExample = require('marked-example');
 
-var lodocs = require('./index.js');
+var filelodocs = require('./file-centric.js');
 
 var fm = require('front-matter');
 var rename = require('gulp-rename');
@@ -43,45 +43,46 @@ data.helpers.footer = fs.readFileSync('./partials/footer.html', 'utf8');
 data.helpers.nav = fs.readFileSync('./partials/nav.html', 'utf8');
 
 
-// Compile lodash templates
-var tpl = function(options) {
-  var options = options || {};
-  return through.obj(function(file, encoding, callback) {
-    var contents = file.contents.toString();
-    console.log('layout', data.layout);
-    var html = lodocs(contents, data);
-    file.contents = new Buffer(html);
-    this.push(file);
-    callback();
-  });
-};
-
-
-var md = function(options) {
-  var renderer = new marked.Renderer();
-  var markedOptions = {};
-  renderer.code = markedExample({
-    classes: {
-      container: 'mb2 bg-darken-1 rounded',
-      rendered: 'p2',
-      code: 'm0 p2 bg-darken-1 rounded-bottom'
-    }
-  });
-  markedOptions.renderer = renderer;
-  return through.obj(function(file, encoding, callback) {
-    var contents = file.contents.toString();
-    var matter = fm(contents);
-    data.layout = matter.layout || null;
-    var html = marked(matter.body, markedOptions);
-    var rendered = _.template(html)(data);
-    console.log(rendered);
-    file.contents = new Buffer(rendered);
-    this.push(file);
-    callback();
-  });
-};
-
+// File centric compilation
 gulp.task('compile', function() {
+
+  // Compile lodash templates
+  var tpl = function(options) {
+    var options = options || {};
+    return through.obj(function(file, encoding, callback) {
+      var contents = file.contents.toString();
+      console.log('layout', data.layout);
+      var html = filelodocs(contents, data);
+      file.contents = new Buffer(html);
+      this.push(file);
+      callback();
+    });
+  };
+
+  var md = function(options) {
+    var renderer = new marked.Renderer();
+    var markedOptions = {};
+    renderer.code = markedExample({
+      classes: {
+        container: 'mb2 bg-darken-1 rounded',
+        rendered: 'p2',
+        code: 'm0 p2 bg-darken-1 rounded-bottom'
+      }
+    });
+    markedOptions.renderer = renderer;
+    return through.obj(function(file, encoding, callback) {
+      var contents = file.contents.toString();
+      var matter = fm(contents);
+      data.layout = matter.layout || null;
+      var html = marked(matter.body, markedOptions);
+      var rendered = _.template(html)(data);
+      console.log(rendered);
+      file.contents = new Buffer(rendered);
+      this.push(file);
+      callback();
+    });
+  };
+
   gulp.src('./views/**/*.html')
     .pipe(tpl())
     .pipe(gulp.dest('./'));
@@ -94,6 +95,7 @@ gulp.task('compile', function() {
     .pipe(gulp.dest('./'));
 });
 
+// Route based compilation
 gulp.task('build', function() {
   var build = require('./build');
   build(data);
@@ -103,7 +105,13 @@ gulp.task('serve', function() {
   gulp.src('./').pipe(webserver({}));
 });
 
-gulp.task('default', ['compile', 'serve'], function() {
-  gulp.watch(['./views/**/*'], ['compile']);
+gulp.task('default', ['build', 'serve'], function() {
+  gulp.watch(
+    ['./views/**/*', './layouts/**/*', './partials/**/*'],
+    ['build']
+  );
 });
+
+//gulp.task('clean', function() {
+//});
 

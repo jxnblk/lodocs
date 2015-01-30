@@ -3,26 +3,17 @@
     "title": "Home",
     "path": "/"
   },
-  "docs": {
-    "title": "Docs",
-    "path": "/docs"
-  },
-  "about": {
-    "title": "About",
-    "path": "/about"
-  },
+  "docs": {},
+  "about": {},
   "modules": {
     "title": "Modules",
-    "path": "/modules",
     "routes": {
       "flex-object": {
         "title": "Flex Object",
-        "path": "/flex-object",
         "source": "flex-object"
       },
       "basscss-grid": {
         "title": "Grid",
-        "path": "/grid",
         "source": "basscss-grid"
       }
     }
