@@ -8,10 +8,16 @@ var read = require('./lib/read');
 var extend = require('./lib/extend');
 var md = require('./lib/md');
 var helpers = require('./lib/helpers');
+var include = require('./lib/include');
 
 module.exports = function(data) {
 
   var self = this;
+
+  this.data = function() {
+    return self;
+  };
+
   if (!data.source) {
     console.error('No source provided');
   }
@@ -19,54 +25,39 @@ module.exports = function(data) {
     console.error('No destination provided');
   }
 
-  this.source = data.source;
-  this.dest = data.dest;
+  _.forIn(data, function(val, key) {
+    this[key] = val;
+  });
 
 
-  this.defaultLayout = read(path.join(this.source, data.layout)) || read(path.join(__dirname, './layouts/default.html'));
+  this.defaultLayout = read(path.join(this.source, this.layout)) || read(path.join(__dirname, './layouts/default.html'));
 
   this.layout = this.defaultLayout;
 
-  data.helpers = data.helpers || {};
+  this.helpers = this.helpers || {};
 
   _.forIn(helpers, function(val, key) {
-    data[key] = val;
+    this[key] = val;
   });
 
-  _.forIn(data.helpers, function(val, key) {
-    data[key] = val;
+  _.forIn(this.helpers, function(val, key) {
+    this[key] = val;
   });
 
   // Partials
-  data.partials = data.partials || {};
+  this.partials = this.partials || {};
+  this.include = include;
 
-  this.include = function(id, locals) {
-    var d = _.cloneDeep(data);
-    _.assign(d, locals);
-    if (data.partials[id]) {
-      return _.template(data.partials[id])(d);
-    } else {
-      return false;
-    }
-  };
-
+  // Extend layouts
   this.extend = extend;
 
-  //this.extend = function(filename) {
-  //  filename = path.join(self.source, filename);
-  //  if (fs.existsSync(filename)) {
-  //    console.log('Extend layout ' + filename);
-  //    self.layout = read(filename);
-  //  } else {
-  //    console.error('Layout ' + filename + ' not found');
-  //    return false;
-  //  }
-  //};
+  this.title = this.title || _.capitalize(this.name.replace(/\-/g, ' '));
 
-  data.title = data.title || _.capitalize(data.name.replace(/\-/g, ' '));
+  this.routes = this.routes || {};
 
-  data.routes = data.routes || {};
 
+  // Private functions
+ 
   function capitalize(string) {
     return _.capitalize(string.replace(/\-/g, ' '));
   };
@@ -97,8 +88,6 @@ module.exports = function(data) {
     });
   };
 
-  formatRoutes(data.routes);
-
   function getModule(name) {
     if (!fs.existsSync('./node_modules/' + name)) return false;
     var module = require(name + '/package.json');
@@ -115,10 +104,6 @@ module.exports = function(data) {
     return obj;
   };
 
-  if (data.modules) {
-    data.modules = parseModules(data.modules);
-  }
-
   function generatePages(routes) {
 
     //var root = root || '';
@@ -126,9 +111,10 @@ module.exports = function(data) {
 
     keys.forEach(function(key) {
       var route = routes[key];
-      var dest = data.dest + route.path;
+      var dest = this.dest + route.path;
       var content = read(path.join(self.source + route.path, './index.html'));
-      var pageData = _.cloneDeep(data);
+      //var pageData = _.cloneDeep(data);
+      var pageData = self.data();
       // Check for markdown file
       if (!content) {
         console.log('checking for markdown');
@@ -158,7 +144,9 @@ module.exports = function(data) {
       } else {
         pageData.page = pageData.page || {};
         pageData.page.title = route.title;
+        //console.log('pageData', pageData);
         pageData.content = _.template(content)(pageData);
+        //console.log('content', pageData.content);
         var template = _.template(self.layout);
         var html = template(pageData);
         if (!fs.existsSync(dest)) {
@@ -179,7 +167,13 @@ module.exports = function(data) {
   };
 
 
-  generatePages(data.routes);
+  // Format and render
+  formatRoutes(this.routes);
+  if (this.modules) {
+    this.modules = parseModules(this.modules);
+  }
+  generatePages(this.routes);
+
 
 };
 
