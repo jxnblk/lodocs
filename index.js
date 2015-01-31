@@ -4,6 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var fm = require('front-matter');
 var md = require('./lib/md');
+var helpers = require('./lib/helpers');
 
 module.exports = function(data) {
 
@@ -15,23 +16,18 @@ module.exports = function(data) {
     console.error('No destination provided');
   }
 
-  //var options = options || {};
-
-  //options.source = options.source || './views';
-  //options.dest = options.dest || '.';
-
   function read(filename) {
     if (fs.existsSync(filename)) {
-        console.log('read', filename);
       return fs.readFileSync(filename, 'utf8');
     } else {
       return false;
     }
   };
 
-  this.layout = read(data.layout) || read(path.join(__dirname, './layouts/default.html'));
+  this.layout = read(path.join(data.source, data.layout)) || read(path.join(__dirname, './layouts/default.html'));
 
   data.helpers = data.helpers || {};
+  _.assign(data.helpers, helpers);
 
   this.include = function(id, locals) {
     var d = _.cloneDeep(data);
@@ -43,21 +39,10 @@ module.exports = function(data) {
     }
   };
 
-  this.exists = function(n) {
-    if (typeof n !== 'undefined') {
-      return true;
-    } else {
-      return false;
-    }
-  };
+  //this.extend = require('./lib/extend');
 
-  data.helpers.json = function(obj) {
-    return JSON.stringify(obj, null, '  ');
-  };
-
-  data.title = data.title || _.capitalize(data.name.replace(/\-/g, ' '));
-
-  data.extend = function(filename) {
+  this.extend = function(filename) {
+    filename = path.join(data.source, filename);
     if (fs.existsSync(filename)) {
       console.log('Extend layout ' + filename);
       self.layout = read(filename);
@@ -67,12 +52,7 @@ module.exports = function(data) {
     }
   };
 
-  // Markdown helper
-  data.helpers.md = function(filename) {
-    var src = read(filename);
-    var html = md(src);
-    return html;
-  };
+  data.title = data.title || _.capitalize(data.name.replace(/\-/g, ' '));
 
   data.routes = data.routes || {};
 
@@ -82,7 +62,6 @@ module.exports = function(data) {
 
   function formatRoutes(routes, root) {
     var root = root || '';
-    console.log('root', root);
     var keys = Object.keys(routes);
     keys.forEach(function(key) {
       var route = routes[key];
@@ -108,7 +87,6 @@ module.exports = function(data) {
   };
 
   formatRoutes(data.routes);
-  console.log(data.routes);
 
   function getModule(name) {
     if (!fs.existsSync('./node_modules/' + name)) return false;
@@ -137,24 +115,18 @@ module.exports = function(data) {
 
     keys.forEach(function(key) {
       var route = routes[key];
-      //var dest = data.dest + root + route.path;
       var dest = data.dest + route.path;
-      //var content = read(path.join(data.source + root + route.path, './index.html'));
       var content = read(path.join(data.source + route.path, './index.html'));
       var pageData = _.cloneDeep(data);
-
       // Check for markdown file
       if (!content) {
         console.log('checking for markdown');
-        //var src  = read(path.join(data.source + root + route.path, './index.md'));
         var src  = read(path.join(data.source + route.path, './index.md'));
         var matter = fm(src);
         _.assign(pageData, matter.attributes);
         content = md(matter.body);
       }
-
       var source = route.source || key;
-
       // Check for parsed module
       if (typeof modules !== 'undefined' && !content) {
         var module = modules[source] || false;
@@ -163,14 +135,12 @@ module.exports = function(data) {
           pageData.page = module;
         }
       }
-
       // Check for node module
       if (!content && fs.existsSync('./node_modules/' + source)) {
         pageData.page = require(source + '/package.json');
         var markdown = read('./node_modules/' + source + '/README.md');
         content = md(markdown);
       }
-
       if (!content) {
         console.error('No content found for ' + route.title);
         route.disabled = true;
@@ -181,19 +151,18 @@ module.exports = function(data) {
         var template = _.template(self.layout);
         var html = template(pageData);
         if (!fs.existsSync(dest)) {
+          console.log(dest);
           fs.mkdirSync(dest);
         }
         console.log('write file', path.join(dest, './index.html'));
         fs.writeFileSync(path.join(dest, './index.html'), html);
       }
-
       var subroutes = route.routes || false;
       if (subroutes) {
-        //generatePages(subroutes, route.path);
         generatePages(subroutes);
       }
-
     });
+
   };
 
 

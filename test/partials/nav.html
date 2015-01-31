@@ -7,7 +7,7 @@
         <ul>
           <% _.forIn(route.routes, function(subroute, k) { %>
           <li>
-            <a href="<%= route.path + subroute.path %>">
+            <a href="<%= subroute.path %>">
               <%= subroute.title %>
               <% if (typeof subroute.disabled !== 'undefined') { %>
                 FILE MISSING
