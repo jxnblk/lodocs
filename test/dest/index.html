@@ -70,9 +70,40 @@
 </ul>
 <pre>
   routes:
-  function (obj) {
-    return JSON.stringify(obj, null, '  ');
+  {
+  "home": {
+    "title": "Home",
+    "path": "/"
+  },
+  "docs": {
+    "path": "/docs",
+    "title": "Docs"
+  },
+  "about": {
+    "path": "/about",
+    "title": "About"
+  },
+  "modules": {
+    "title": "Modules",
+    "routes": {
+      "flex-object": {
+        "title": "Flex Object",
+        "source": "flex-object",
+        "path": "/modules/flex-object"
+      },
+      "basscss-grid": {
+        "title": "Grid",
+        "source": "basscss-grid",
+        "path": "/modules/basscss-grid"
+      },
+      "basscss-utility-layout": {
+        "path": "/modules/basscss-utility-layout",
+        "title": "Basscss utility layout"
+      }
+    },
+    "path": "/modules"
   }
+}
 </pre>
 
     </div>

@@ -16,10 +16,10 @@ data.stylesheet = 'http://d2v52k3cl9vedd.cloudfront.net/blk/0.0.14/blk.min.css';
 //data.partials.footer = fs.readFileSync(path.join(__dirname, './partials/footer.html'), 'utf8');
 //data.partials.nav = fs.readFileSync(path.join(__dirname, './partials/nav.html'), 'utf8');
 
-data.helpers = {};
+data.partials = {};
 //data.helpers.sidebar = fs.readFileSync(path.join(__dirname, './partials/sidebar.html'), 'utf8');
-data.helpers.footer = fs.readFileSync(path.join(__dirname, './partials/footer.html'), 'utf8');
-data.helpers.nav = fs.readFileSync(path.join(__dirname, './partials/nav.html'), 'utf8');
+data.partials.footer = fs.readFileSync(path.join(__dirname, './partials/footer.html'), 'utf8');
+data.partials.nav = fs.readFileSync(path.join(__dirname, './partials/nav.html'), 'utf8');
 
 lodocs(data);
 

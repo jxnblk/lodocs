@@ -3,6 +3,9 @@ var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
 var fm = require('front-matter');
+
+var read = require('./lib/read');
+var extend = require('./lib/extend');
 var md = require('./lib/md');
 var helpers = require('./lib/helpers');
 
@@ -16,41 +19,47 @@ module.exports = function(data) {
     console.error('No destination provided');
   }
 
-  function read(filename) {
-    if (fs.existsSync(filename)) {
-      return fs.readFileSync(filename, 'utf8');
-    } else {
-      return false;
-    }
-  };
+  this.source = data.source;
+  this.dest = data.dest;
 
-  this.layout = read(path.join(data.source, data.layout)) || read(path.join(__dirname, './layouts/default.html'));
+
+  this.layout = read(path.join(this.source, data.layout)) || read(path.join(__dirname, './layouts/default.html'));
 
   data.helpers = data.helpers || {};
-  _.assign(data.helpers, helpers);
+
+  _.forIn(helpers, function(val, key) {
+    data[key] = val;
+  });
+
+  _.forIn(data.helpers, function(val, key) {
+    data[key] = val;
+  });
+
+  // Partials
+  data.partials = data.partials || {};
 
   this.include = function(id, locals) {
     var d = _.cloneDeep(data);
     _.assign(d, locals);
-    if (data.helpers[id]) {
-      return _.template(data.helpers[id])(d);
+    if (data.partials[id]) {
+      return _.template(data.partials[id])(d);
     } else {
       return false;
     }
   };
 
-  //this.extend = require('./lib/extend');
+  this.extend = extend;
 
-  this.extend = function(filename) {
-    filename = path.join(data.source, filename);
-    if (fs.existsSync(filename)) {
-      console.log('Extend layout ' + filename);
-      self.layout = read(filename);
-    } else {
-      console.error('Layout ' + filename + ' not found');
-      return false;
-    }
-  };
+  //this.extend = function(filename) {
+  //  filename = path.join(self.source, filename);
+  //  if (fs.existsSync(filename)) {
+  //    console.log('Extend layout ' + filename);
+  //    self.layout = read(filename);
+  //  } else {
+  //    console.error('Layout ' + filename + ' not found');
+  //    return false;
+  //  }
+  //};
 
   data.title = data.title || _.capitalize(data.name.replace(/\-/g, ' '));
 
@@ -116,12 +125,12 @@ module.exports = function(data) {
     keys.forEach(function(key) {
       var route = routes[key];
       var dest = data.dest + route.path;
-      var content = read(path.join(data.source + route.path, './index.html'));
+      var content = read(path.join(self.source + route.path, './index.html'));
       var pageData = _.cloneDeep(data);
       // Check for markdown file
       if (!content) {
         console.log('checking for markdown');
-        var src  = read(path.join(data.source + route.path, './index.md'));
+        var src  = read(path.join(self.source + route.path, './index.md'));
         var matter = fm(src);
         _.assign(pageData, matter.attributes);
         content = md(matter.body);
