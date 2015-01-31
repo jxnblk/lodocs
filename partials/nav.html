@@ -6,10 +6,20 @@
       <% if (typeof route.routes !== 'undefined') { %>
         <ul>
           <% _.forIn(route.routes, function(subroute, k) { %>
-            <li><a href="<%= route.path + subroute.path %>"><%= subroute.title %></a>
+          <li>
+            <a href="<%= route.path + subroute.path %>">
+              <%= subroute.title %>
+              <% if (typeof subroute.disabled !== 'undefined') { %>
+                FILE MISSING
+              <% } %>
+            </a>
           <% }) %>
         </ul>
       <% } %>
     </li>
   <% }) %>
 </ul>
+<pre>
+  routes:
+  <%= include('json', obj.routes) %>
+</pre>

@@ -2,6 +2,7 @@
 var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
+var fm = require('front-matter');
 var md = require('./lib/md');
 
 module.exports = function(data, options) {
@@ -20,7 +21,7 @@ module.exports = function(data, options) {
     }
   };
 
-  this.layout = read(data.layout) || read('./layouts/base.html');
+  this.layout = read(data.layout) || read(path.join(__dirname, './layouts/default.html'));
 
   data.helpers = data.helpers || {};
 
@@ -34,21 +35,35 @@ module.exports = function(data, options) {
     }
   };
 
+  this.exists = function(n) {
+    if (typeof n !== 'undefined') {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  data.helpers.json = function(obj) {
+    return JSON.stringify(obj, null, '  ');
+  };
+
   data.title = data.title || _.capitalize(data.name.replace(/\-/g, ' '));
 
   data.extend = function(filename) {
     if (fs.existsSync(filename)) {
-      console.log('extend layout', filename);
+      console.log('Extend layout ' + filename);
       self.layout = read(filename);
     } else {
-      console.error(filename + ' not found');
+      console.error('Layout ' + filename + ' not found');
       return false;
     }
   };
 
   // Markdown helper
-  data.md = function(filename) {
-    return read(filename);
+  data.helpers.md = function(filename) {
+    var src = read(filename);
+    var html = md(src);
+    return html;
   };
 
   data.routes = data.routes || {};
@@ -57,40 +72,78 @@ module.exports = function(data, options) {
     return _.capitalize(string.replace(/\-/g, ' '));
   };
 
-  function generatePages(routes, root) {
-
+  function formatRoutes(routes, root) {
     var root = root || '';
     var keys = Object.keys(routes);
     keys.forEach(function(key) {
       var route = routes[key];
-      var slug = route.path || '/' + key;
-      var dest = options.dest + root + slug;
-      var content = read(path.join(options.source + root + route.path, './index.html'));
-      if (!content) {
-        console.log('no content', route.source, route.title);
-      }
+      route.path = route.path || '/' + key;
       var source = route.source || key;
       if (source) {
-        if (!fs.existsSync('./node_modules' + source)) return false;
-        console.log('has source', route.title);
-        data.page = require(source + '/package.json');
+        if (fs.existsSync('./node_modules' + source)) {
+          var pkg = require(source + '/package.json');
+          route.source = pkg.name;
+          route.title = route.title || capitalize(pkg.name);
+        }
+      }
+      // Set title if manually set in routes object
+      route.title = route.title || capitalize(key);
+      if (route.routes) {
+        formatRoutes(route.routes, route.path);
+      }
+    });
+  };
+
+  formatRoutes(data.routes);
+
+
+  function generatePages(routes, root) {
+
+    var root = root || '';
+    var keys = Object.keys(routes);
+
+    keys.forEach(function(key) {
+      var route = routes[key];
+      var dest = options.dest + root + route.path;
+      var content = read(path.join(options.source + root + route.path, './index.html'));
+      var pageData = _.cloneDeep(data);
+
+      // Check for markdown file
+      if (!content) {
+        console.log('checking for markdown');
+        var src  = read(path.join(options.source + root + route.path, './index.md'));
+        var matter = fm(src);
+        _.assign(pageData, matter.attributes);
+        content = md(matter.body);
+      }
+
+      var source = route.source || key;
+
+      if (!content && fs.existsSync('./node_modules/' + source)) {
+        pageData.page = require(source + '/package.json');
         var markdown = read('./node_modules/' + source + '/README.md');
         content = md(markdown);
       }
-      data.page = data.page || {};
-      data.page.title = route.title || capitalize(key);
-      data.content = _.template(content)(data);
-      var template = _.template(self.layout);
-      var html = template(data);
-      if (!fs.existsSync(dest)) {
-        fs.mkdirSync(dest);
+
+      if (!content) {
+        console.error('No content found for ' + route.title);
+        route.disabled = true;
+      } else {
+        pageData.page = pageData.page || {};
+        pageData.page.title = route.title;
+        pageData.content = _.template(content)(pageData);
+        var template = _.template(self.layout);
+        var html = template(pageData);
+        if (!fs.existsSync(dest)) {
+          fs.mkdirSync(dest);
+        }
+        console.log('write file', path.join(dest, './index.html'));
+        fs.writeFileSync(path.join(dest, './index.html'), html);
       }
-      console.log(path.join(dest, './index.html'));
-      fs.writeFileSync(path.join(dest, './index.html'), html);
 
       var subroutes = route.routes || false;
       if (subroutes) {
-        generatePages(subroutes, slug);
+        generatePages(subroutes, route.path);
       }
 
     });
