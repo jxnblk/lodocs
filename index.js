@@ -23,7 +23,9 @@ module.exports = function(data) {
   this.dest = data.dest;
 
 
-  this.layout = read(path.join(this.source, data.layout)) || read(path.join(__dirname, './layouts/default.html'));
+  this.defaultLayout = read(path.join(this.source, data.layout)) || read(path.join(__dirname, './layouts/default.html'));
+
+  this.layout = this.defaultLayout;
 
   data.helpers = data.helpers || {};
 
@@ -166,6 +168,8 @@ module.exports = function(data) {
         console.log('write file', path.join(dest, './index.html'));
         fs.writeFileSync(path.join(dest, './index.html'), html);
       }
+      // Reset layout
+      self.layout = self.defaultLayout;
       var subroutes = route.routes || false;
       if (subroutes) {
         generatePages(subroutes);
