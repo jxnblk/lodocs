@@ -5,16 +5,24 @@ var path = require('path');
 var fm = require('front-matter');
 var md = require('./lib/md');
 
-module.exports = function(data, options) {
+module.exports = function(data) {
 
   var self = this;
-  var options = options || {};
+  if (!data.source) {
+    console.error('No source provided');
+  }
+  if (!data.dest) {
+    console.error('No destination provided');
+  }
 
-  options.source = options.source || './views';
-  options.dest = options.dest || '.';
+  //var options = options || {};
+
+  //options.source = options.source || './views';
+  //options.dest = options.dest || '.';
 
   function read(filename) {
     if (fs.existsSync(filename)) {
+        console.log('read', filename);
       return fs.readFileSync(filename, 'utf8');
     } else {
       return false;
@@ -74,10 +82,15 @@ module.exports = function(data, options) {
 
   function formatRoutes(routes, root) {
     var root = root || '';
+    console.log('root', root);
     var keys = Object.keys(routes);
     keys.forEach(function(key) {
       var route = routes[key];
-      route.path = route.path || '/' + key;
+      if (route.path) {
+        route.path = root + route.path;
+      } else {
+        route.path = root + '/' + key;
+      }
       var source = route.source || key;
       if (source) {
         if (fs.existsSync('./node_modules' + source)) {
@@ -89,29 +102,52 @@ module.exports = function(data, options) {
       // Set title if manually set in routes object
       route.title = route.title || capitalize(key);
       if (route.routes) {
-        formatRoutes(route.routes, route.path);
+        formatRoutes(route.routes, root + route.path);
       }
     });
   };
 
   formatRoutes(data.routes);
+  console.log(data.routes);
 
+  function getModule(name) {
+    if (!fs.existsSync('./node_modules/' + name)) return false;
+    var module = require(name + '/package.json');
+    var markdown = read('./node_modules/' + name + '/README.md');
+    module.content = md(markdown);
+    return module;
+  };
 
-  function generatePages(routes, root) {
+  function parseModules(modules) {
+    var obj = {};
+    modules.forEach(function(name) {
+      obj[name] = getModule(name);
+    });
+    return obj;
+  };
 
-    var root = root || '';
+  if (data.modules) {
+    data.modules = parseModules(data.modules);
+  }
+
+  function generatePages(routes) {
+
+    //var root = root || '';
     var keys = Object.keys(routes);
 
     keys.forEach(function(key) {
       var route = routes[key];
-      var dest = options.dest + root + route.path;
-      var content = read(path.join(options.source + root + route.path, './index.html'));
+      //var dest = data.dest + root + route.path;
+      var dest = data.dest + route.path;
+      //var content = read(path.join(data.source + root + route.path, './index.html'));
+      var content = read(path.join(data.source + route.path, './index.html'));
       var pageData = _.cloneDeep(data);
 
       // Check for markdown file
       if (!content) {
         console.log('checking for markdown');
-        var src  = read(path.join(options.source + root + route.path, './index.md'));
+        //var src  = read(path.join(data.source + root + route.path, './index.md'));
+        var src  = read(path.join(data.source + route.path, './index.md'));
         var matter = fm(src);
         _.assign(pageData, matter.attributes);
         content = md(matter.body);
@@ -119,6 +155,16 @@ module.exports = function(data, options) {
 
       var source = route.source || key;
 
+      // Check for parsed module
+      if (typeof modules !== 'undefined' && !content) {
+        var module = modules[source] || false;
+        if (module) {
+          content = modules[source].content;
+          pageData.page = module;
+        }
+      }
+
+      // Check for node module
       if (!content && fs.existsSync('./node_modules/' + source)) {
         pageData.page = require(source + '/package.json');
         var markdown = read('./node_modules/' + source + '/README.md');
@@ -143,7 +189,8 @@ module.exports = function(data, options) {
 
       var subroutes = route.routes || false;
       if (subroutes) {
-        generatePages(subroutes, route.path);
+        //generatePages(subroutes, route.path);
+        generatePages(subroutes);
       }
 
     });
