@@ -1,6 +1,7 @@
 
-- [ ] return Lodocs class
-- [ ] init()
-- [ ] compile()
+- [x] return Lodocs class
+- [x] init()
+- [x] compile()
 - [ ] data()
-- [ ] set global modulePath (maybe unneeded);
+
+- [/] set global modulePath (maybe unneeded);

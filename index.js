@@ -3,15 +3,15 @@ var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
 
+var md = require('./lib/md');
 var read = require('./lib/read');
 var extend = require('./lib/extend');
-var md = require('./lib/md');
 var helpers = require('./lib/helpers');
 var include = require('./lib/include');
-var generatePages = require('./lib/generate-pages');
 var formatRoutes = require('./lib/format-routes');
 var parseModules = require('./lib/parse-modules');
 var humanizeName = require('./lib/humanize-name');
+var generatePages = require('./lib/generate-pages');
 
 
 module.exports = function() {
@@ -29,6 +29,16 @@ module.exports = function() {
       console.error('No destination provided');
     }
 
+    _.defaults(data, {
+      root: data.dest,
+      helpers: {},
+      partials: {},
+      routes: {},
+      title: humanizeName(data.name),
+      include: include,
+      extend: extend
+    });
+
     _.forIn(data, function(val, key) {
       self[key] = val;
     });
@@ -37,7 +47,6 @@ module.exports = function() {
 
     this.layout = this.defaultLayout;
 
-    this.helpers = this.helpers || {};
     _.forIn(helpers, function(val, key) {
       this[key] = val;
     });
@@ -45,11 +54,12 @@ module.exports = function() {
       this[key] = val;
     });
 
-    this.partials = this.partials || {};
-    this.include = include;
-    this.extend = extend;
-    this.title = this.title || humanizeName(this.name);
-    this.routes = this.routes || {};
+    //this.helpers = this.helpers || {};
+    //this.partials = this.partials || {};
+    //this.routes = this.routes || {};
+    //this.title = this.title || humanizeName(this.name);
+    //this.include = include;
+    //this.extend = extend;
 
     // Format and render
     formatRoutes(this.routes);
@@ -62,7 +72,6 @@ module.exports = function() {
   this.compile = generatePages;
 
   return this;
-
 
 };
 
