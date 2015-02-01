@@ -14,45 +14,54 @@ var parseModules = require('./lib/parse-modules');
 var humanizeName = require('./lib/humanize-name');
 
 
-module.exports = function(data) {
+module.exports = function() {
 
   var self = this;
 
-  if (!data.source) {
-    console.error('No source provided');
-  }
-  if (!data.dest) {
-    console.error('No destination provided');
-  }
+  this.parseModules = parseModules;
 
-  _.forIn(data, function(val, key) {
-    this[key] = val;
-  });
+  this.init = function(data) {
 
-  this.defaultLayout = read(path.join(this.source, this.layout)) || read(path.join(__dirname, './layouts/default.html'));
+    if (!data.source) {
+      console.error('No source provided');
+    }
+    if (!data.dest) {
+      console.error('No destination provided');
+    }
 
-  this.layout = this.defaultLayout;
+    _.forIn(data, function(val, key) {
+      self[key] = val;
+    });
 
-  this.helpers = this.helpers || {};
-  _.forIn(helpers, function(val, key) {
-    this[key] = val;
-  });
-  _.forIn(this.helpers, function(val, key) {
-    this[key] = val;
-  });
+    this.defaultLayout = read(path.join(self.source, self.layout)) || read(path.join(__dirname, './layouts/default.html'));
 
-  this.partials = this.partials || {};
-  this.include = include;
-  this.extend = extend;
-  this.title = this.title || humanizeName(this.name);
-  this.routes = this.routes || {};
+    this.layout = this.defaultLayout;
 
-  // Format and render
-  formatRoutes(this.routes);
-  if (this.modules) {
-    this.modules = parseModules(this.modules);
-  }
-  generatePages(this.routes);
+    this.helpers = this.helpers || {};
+    _.forIn(helpers, function(val, key) {
+      this[key] = val;
+    });
+    _.forIn(this.helpers, function(val, key) {
+      this[key] = val;
+    });
+
+    this.partials = this.partials || {};
+    this.include = include;
+    this.extend = extend;
+    this.title = this.title || humanizeName(this.name);
+    this.routes = this.routes || {};
+
+    // Format and render
+    formatRoutes(this.routes);
+    if (this.modules) {
+      this.modules = this.parseModules(this.modules);
+    }
+
+  };
+
+  this.compile = generatePages;
+
+  return this;
 
 
 };

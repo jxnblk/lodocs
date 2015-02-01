@@ -1,7 +1,7 @@
 
 var fs = require('fs');
 var path = require('path');
-var lodocs = require('..');
+var Lodocs = require('..');
 
 var data = require('../package.json');
 data.routes = require('./routes.json');
@@ -19,5 +19,7 @@ data.partials = {};
 data.partials.footer = fs.readFileSync(path.join(__dirname, './partials/footer.html'), 'utf8');
 data.partials.nav = fs.readFileSync(path.join(__dirname, './partials/nav.html'), 'utf8');
 
-lodocs(data);
+var lodocs = new Lodocs();
+lodocs.init(data);
+lodocs.compile();
 
