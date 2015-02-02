@@ -3,7 +3,6 @@ var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
 
-var md = require('./lib/md');
 var read = require('./lib/read');
 var extend = require('./lib/extend');
 var helpers = require('./lib/helpers');
@@ -19,6 +18,7 @@ module.exports = function() {
   var self = this;
 
   this.parseModules = parseModules;
+  this.formatRoutes = formatRoutes;
 
   this.init = function(data) {
 
@@ -54,18 +54,11 @@ module.exports = function() {
       this[key] = val;
     });
 
-    //this.helpers = this.helpers || {};
-    //this.partials = this.partials || {};
-    //this.routes = this.routes || {};
-    //this.title = this.title || humanizeName(this.name);
-    //this.include = include;
-    //this.extend = extend;
-
-    // Format and render
-    formatRoutes(this.routes);
     if (this.modules) {
       this.modules = this.parseModules(this.modules);
     }
+
+    this.formatRoutes(this.routes);
 
   };
 
