@@ -43,7 +43,11 @@ module.exports = function() {
       self[key] = val;
     });
 
-    this.defaultLayout = read(path.join(self.source, self.layout)) || read(path.join(__dirname, './layouts/default.html'));
+    if (self.layout) {
+      this.defaultLayout = read(path.join(self.source, self.layout));
+    } else {
+      this.defaultLayout = read(path.join(__dirname, './layouts/default.html'));
+    }
 
     this.layout = this.defaultLayout;
 
